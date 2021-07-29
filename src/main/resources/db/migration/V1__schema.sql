@@ -1,15 +1,37 @@
-CREATE SEQUENCE trx_id_seq
+CREATE SEQUENCE product_id_seq
     INCREMENT 1
     MINVALUE  1
     MAXVALUE 9223372036854775807
     START 1
     CACHE 1;
 
-CREATE TABLE trx (
+CREATE TABLE product (
     id bigint NOT NULL,
     product_name character varying(256) NOT NULL,
-    amount int NOT NULL,
+    price numeric(16,6) NOT NULL,
+    weight int NOT NULL,
+    CONSTRAINT product_pkey PRIMARY KEY(id),
+);
+
+CREATE SEQUENCE transaction_id_seq
+    INCREMENT 1
+    MINVALUE  1
+    MAXVALUE 9223372036854775807
+    START 1
+    CACHE 1;
+
+CREATE TABLE transaction (
+    id bigint NOT NULL,
+    product_id bigint NOT NULL,
+    quantity int NOT NULL,
+    sub_total numeric(16,6) NOT NULL,
+    courier character varying(256),
+    total numeric(16,6),
     inquiry_code character varying(256) NOT NULL,
-    trx_status character varying(256) NOT NULL,
-    CONSTRAINT trx_pkey PRIMARY KEY (id)
+    status character varying(256) NOT NULL,
+    CONSTRAINT transaction_pkey PRIMARY KEY(id),
+    CONSTRAINT product_id FOREIGN KEY(product_id)
+        REFERENCES product(id)
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
 );

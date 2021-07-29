@@ -1,9 +1,9 @@
-package com.example.demo.module.trx;
+package com.example.demo.module.transaction;
 
-import com.example.demo.module.trx.request.InquiryRequest;
-import com.example.demo.module.trx.request.PaymentRequest;
-import com.example.demo.module.trx.response.InquiryResponse;
-import com.example.demo.module.trx.response.PaymentResponse;
+import com.example.demo.module.transaction.request.InquiryRequest;
+import com.example.demo.module.transaction.request.PaymentRequest;
+import com.example.demo.module.transaction.response.InquiryResponse;
+import com.example.demo.module.transaction.response.PaymentResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/trx")
-public class TrxController {
+@RequestMapping("/transaction")
+public class TransactionController {
 
     @Autowired
-    TrxService service;
+    TransactionService service;
 
     @PostMapping("/inquiry")
     public InquiryResponse inquiry(@RequestBody InquiryRequest request) {
