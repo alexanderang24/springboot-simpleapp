@@ -2,13 +2,15 @@ package com.example.demo.client.rajaongkir;
 
 import com.example.demo.client.rajaongkir.dto.request.CostRequest;
 import com.example.demo.client.rajaongkir.dto.response.CostResponse;
+import com.example.demo.enums.ResponseEnum;
+import com.example.demo.exception.SpringBootSimpleAppException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,18 +26,29 @@ public class RajaongkirClientService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    @Cacheable(value = "costResponse", key = "#costRequest.courier + #costRequest.weight")
     public CostResponse getCost(CostRequest costRequest) {
         String url = baseUrl.concat("/cost");
         HttpHeaders headers = setHeader();
-        HttpEntity<CostRequest> request = new HttpEntity<>(costRequest, headers);
+        MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+        prepareFormData(map, costRequest);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map, headers);
         try {
+            log.info("Sending cost request to RajaOngkir API: " + request);
             ResponseEntity<CostResponse> response = restTemplate.postForEntity(url, request, CostResponse.class);
-            log.debug("Response: " + response.getBody());
+            log.info("Response status: " + response.getStatusCode());
             return response.getBody();
         } catch (RestClientException e){
-            log.error(e.getMessage(), e);
-            return null;
+            log.warn("Failed sending request to RajaOngkir");
+            throw new SpringBootSimpleAppException(ResponseEnum.CLIENT_ERROR.getMessage(), ResponseEnum.CLIENT_ERROR.getStatus(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void prepareFormData(MultiValueMap<String, Object> map, CostRequest r) {
+        map.add("origin", r.getOrigin());
+        map.add("destination", r.getDestination());
+        map.add("courier", r.getCourier());
+        map.add("weight", r.getWeight());
     }
 
     private HttpHeaders setHeader() {

@@ -1,6 +1,7 @@
 package com.example.demo.client.rajaongkir.dto.response;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

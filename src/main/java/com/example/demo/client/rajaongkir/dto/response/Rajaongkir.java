@@ -9,5 +9,5 @@ import java.util.List;
 @Setter
 public class Rajaongkir {
     private Status status;
-    private List<Result> result;
+    private List<Result> results;
 }

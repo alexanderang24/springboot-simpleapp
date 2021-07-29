@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/transaction")
 public class TransactionController {
@@ -18,12 +20,12 @@ public class TransactionController {
     TransactionService service;
 
     @PostMapping("/inquiry")
-    public InquiryResponse inquiry(@RequestBody InquiryRequest request) {
+    public InquiryResponse inquiry(@RequestBody @Valid InquiryRequest request) {
         return service.inquiry(request);
     }
 
     @PostMapping("/payment")
-    public PaymentResponse inquiry(@RequestBody PaymentRequest request) {
+    public PaymentResponse inquiry(@RequestBody @Valid PaymentRequest request) {
         return service.payment(request);
     }
 }
