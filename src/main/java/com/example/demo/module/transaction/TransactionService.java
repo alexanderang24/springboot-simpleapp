@@ -90,7 +90,7 @@ public class TransactionService {
             throw new SpringBootSimpleAppException(ResponseEnum.TRANSACTION_ALREADY_PROCESSED.getMessage(), ResponseEnum.TRANSACTION_ALREADY_PROCESSED.getStatus(), HttpStatus.BAD_REQUEST);
         } else {
             String productWeight = transaction.getProduct().getWeight().toString();
-            BigDecimal courierCost = getCourierCost(productWeight, request.getCourier());
+            BigDecimal courierCost = getCourierCost(productWeight, request.getCourier(), request.getInquiryCode());
             BigDecimal total = transaction.getSubTotal().add(courierCost);
 
             transaction.setTotal(total);
@@ -107,8 +107,8 @@ public class TransactionService {
         }
     }
 
-    private BigDecimal getCourierCost(String weight, String courier) {
-        log.debug("Checking courier cost for weight [" + weight + "] and courier [" + courier + "]");
+    private BigDecimal getCourierCost(String weight, String courier, String inquiryCode) {
+        log.debug("Checking courier cost for weight [" + weight + "] and courier [" + courier + "] | Inquiry code: [" + inquiryCode + "]");
         CostRequest costRequest = CostRequest.builder()
                 .origin(origin)
                 .destination(destination)
@@ -118,16 +118,21 @@ public class TransactionService {
         CostResponse costResponse = rajaongkirClientService.getCost(costRequest);
 
         List<Costs> costs = costResponse.getRajaongkir().getResults().get(0).getCosts();
+        BigDecimal courierCost;
         switch (courier) {
             case "jne":
-                return costs.get(jneCourierType).getCost().get(0).getValue();
+                courierCost = costs.get(jneCourierType).getCost().get(0).getValue();
+                break;
             case "tiki":
-                return costs.get(tikiCourierType).getCost().get(0).getValue();
+                courierCost = costs.get(tikiCourierType).getCost().get(0).getValue();
+                break;
             case "pos":
-                return costs.get(posCourierType).getCost().get(0).getValue();
+                courierCost = costs.get(posCourierType).getCost().get(0).getValue();
+                break;
             default:
-                log.warn("Unknown courier type: [" + courier + "]");
+                log.warn("Unknown courier type: [" + courier + "] | Inquiry code: [" + inquiryCode + "]");
                 throw new SpringBootSimpleAppException(ResponseEnum.UNKNOWN_ERROR.getMessage(), ResponseEnum.UNKNOWN_ERROR.getStatus(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        return courierCost;
     }
 }
