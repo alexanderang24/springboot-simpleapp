@@ -59,7 +59,7 @@ public class TransactionService {
         Product product = productRepositoryService.findById(request.getProductId());
         if(product == null) {
             log.warn("Found no product with specified ID: [" + request.getProductId() + "]");
-            throw new SpringBootSimpleAppException(ResponseEnum.TRANSACTION_NOT_FOUND.getMessage(), ResponseEnum.TRANSACTION_NOT_FOUND.getStatus(), HttpStatus.BAD_REQUEST);
+            throw new SpringBootSimpleAppException(ResponseEnum.PRODUCT_NOT_FOUND.getMessage(), ResponseEnum.PRODUCT_NOT_FOUND.getStatus(), HttpStatus.BAD_REQUEST);
         }
 
         BigDecimal subTotal = product.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
