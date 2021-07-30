@@ -25,7 +25,7 @@ CREATE TABLE transaction (
     product_id bigint NOT NULL,
     quantity int NOT NULL,
     sub_total numeric(16,6) NOT NULL,
-    courier character varying(256),
+    courier_cost numeric(16,6),
     total numeric(16,6),
     inquiry_code character varying(256) NOT NULL,
     status character varying(256) NOT NULL,

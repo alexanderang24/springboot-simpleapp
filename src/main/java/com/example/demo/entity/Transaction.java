@@ -24,7 +24,7 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal subTotal;
     @Column()
-    private String courier;
+    private BigDecimal courierCost;
     @Column()
     private BigDecimal total;
     @Column(nullable = false)

@@ -6,7 +6,7 @@ import java.lang.annotation.*;
 
 @Documented
 @Constraint(validatedBy = CourierValidator.class)
-@Target({ ElementType.FIELD})
+@Target({ ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CourierConstraint {
 

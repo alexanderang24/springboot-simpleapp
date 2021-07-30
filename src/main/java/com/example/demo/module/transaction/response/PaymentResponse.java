@@ -9,6 +9,4 @@ import lombok.*;
 @AllArgsConstructor
 public class PaymentResponse {
     private String inquiryCode;
-    private String status;
-    private String message;
 }

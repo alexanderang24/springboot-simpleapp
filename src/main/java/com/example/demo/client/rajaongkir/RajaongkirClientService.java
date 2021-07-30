@@ -6,7 +6,6 @@ import com.example.demo.enums.ResponseEnum;
 import com.example.demo.exception.SpringBootSimpleAppException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -26,7 +25,6 @@ public class RajaongkirClientService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Cacheable(value = "costResponse", key = "#costRequest.courier + #costRequest.weight")
     public CostResponse getCost(CostRequest costRequest) {
         String url = baseUrl.concat("/cost");
         HttpHeaders headers = setHeader();

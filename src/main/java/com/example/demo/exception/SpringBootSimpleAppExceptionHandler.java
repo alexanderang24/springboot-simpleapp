@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import javax.validation.ConstraintViolationException;
 
 @Slf4j
 @ControllerAdvice
@@ -35,6 +38,26 @@ public class SpringBootSimpleAppExceptionHandler {
         return ErrorResponse.builder()
                 .code(ResponseEnum.INVALID_PARAMETER.getStatus())
                 .message(e.getBindingResult().getAllErrors().get(0).getDefaultMessage())
+                .build();
+    }
+
+    @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse methodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        log.warn(e.getMessage(), e);
+        return ErrorResponse.builder()
+                .code(ResponseEnum.INVALID_PARAMETER.getStatus())
+                .message(ResponseEnum.INVALID_PARAMETER.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler(value = ConstraintViolationException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse constraintViolationException(ConstraintViolationException e) {
+        log.warn(e.getMessage(), e);
+        return ErrorResponse.builder()
+                .code(ResponseEnum.INVALID_PARAMETER.getStatus())
+                .message(e.getMessage())
                 .build();
     }
 

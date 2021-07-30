@@ -8,6 +8,7 @@ import com.example.demo.entity.Product;
 import com.example.demo.entity.Transaction;
 import com.example.demo.enums.ResponseEnum;
 import com.example.demo.exception.SpringBootSimpleAppException;
+import com.example.demo.module.BaseResponse;
 import com.example.demo.module.transaction.request.InquiryRequest;
 import com.example.demo.module.transaction.request.PaymentRequest;
 import com.example.demo.module.transaction.response.InquiryResponse;
@@ -17,6 +18,7 @@ import com.example.demo.repository.TransactionRepositoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -52,7 +54,7 @@ public class TransactionService {
     @Autowired
     RajaongkirClientService rajaongkirClientService;
 
-    public InquiryResponse inquiry(InquiryRequest request) {
+    public BaseResponse<InquiryResponse> inquiry(InquiryRequest request) {
         log.info("Received inquiry for product with ID: [" + request.getProductId() + "] and quantity: [" + request.getQuantity() + "]");
         Product product = productRepositoryService.findById(request.getProductId());
         if(product == null) {
@@ -72,15 +74,17 @@ public class TransactionService {
         transactionRepositoryService.save(transaction);
 
         log.info("Created new transaction with inquiry code [" + transaction.getInquiryCode() + "] for product ID [" + request.getProductId() + "] and quantity [" + request.getQuantity() + "]");
-        return InquiryResponse.builder()
-                .inquiryCode(transaction.getInquiryCode())
+        return BaseResponse.<InquiryResponse>builder()
                 .status(ResponseEnum.INQUIRED.getStatus())
                 .message(ResponseEnum.INQUIRED.getMessage())
+                .data(InquiryResponse.builder()
+                        .inquiryCode(transaction.getInquiryCode())
+                        .build())
                 .build();
     }
 
-    public PaymentResponse payment(PaymentRequest request) {
-        log.info("Received payment with inquiry code: [" + request.getInquiryCode() + "] and courier: [" + request.getCourier() + "]");
+    public BaseResponse<PaymentResponse> payment(PaymentRequest request) {
+        log.info("Received payment with inquiry code: [" + request.getInquiryCode() + "] and courier cost: [" + request.getCourierCost() + "]");
         Transaction transaction = transactionRepositoryService.findByInquiryCode(request.getInquiryCode());
         if (null == transaction) {
             log.warn("Found no transaction with specified inquiry code! [" + request.getInquiryCode() + "]");
@@ -89,30 +93,29 @@ public class TransactionService {
             log.warn("Transaction is already completed! [" + request.getInquiryCode() + "]");
             throw new SpringBootSimpleAppException(ResponseEnum.TRANSACTION_ALREADY_PROCESSED.getMessage(), ResponseEnum.TRANSACTION_ALREADY_PROCESSED.getStatus(), HttpStatus.BAD_REQUEST);
         } else {
-            String productWeight = transaction.getProduct().getWeight().toString();
-            BigDecimal courierCost = getCourierCost(productWeight, request.getCourier(), request.getInquiryCode());
-            BigDecimal total = transaction.getSubTotal().add(courierCost);
-
-            transaction.setTotal(total);
-            transaction.setCourier(request.getCourier());
+            transaction.setCourierCost(request.getCourierCost());
+            transaction.setTotal(transaction.getSubTotal().add(request.getCourierCost()));
             transaction.setStatus(ResponseEnum.SUCCESS.getStatus());
             transactionRepositoryService.save(transaction);
 
             log.info("Transaction with code [" + request.getInquiryCode() + "] has been completed");
-            return PaymentResponse.builder()
-                    .inquiryCode(transaction.getInquiryCode())
+            return BaseResponse.<PaymentResponse>builder()
                     .status(ResponseEnum.SUCCESS.getStatus())
                     .message(ResponseEnum.SUCCESS.getMessage())
+                    .data(PaymentResponse.builder()
+                            .inquiryCode(transaction.getInquiryCode())
+                            .build())
                     .build();
         }
     }
 
-    private BigDecimal getCourierCost(String weight, String courier, String inquiryCode) {
-        log.debug("Checking courier cost for weight [" + weight + "] and courier [" + courier + "] | Inquiry code: [" + inquiryCode + "]");
+    @Cacheable(value = "courier_cost", key = "#courier + #weight")
+    public BaseResponse<BigDecimal> getCourierCost(String courier, Integer weight) {
+        log.debug("Checking courier cost for weight [" + weight + "] and courier [" + courier + "]");
         CostRequest costRequest = CostRequest.builder()
                 .origin(origin)
                 .destination(destination)
-                .weight(weight)
+                .weight(weight.toString())
                 .courier(courier)
                 .build();
         CostResponse costResponse = rajaongkirClientService.getCost(costRequest);
@@ -130,9 +133,13 @@ public class TransactionService {
                 courierCost = costs.get(posCourierType).getCost().get(0).getValue();
                 break;
             default:
-                log.warn("Unknown courier type: [" + courier + "] | Inquiry code: [" + inquiryCode + "]");
+                log.warn("Unknown courier type: [" + courier + "]");
                 throw new SpringBootSimpleAppException(ResponseEnum.UNKNOWN_ERROR.getMessage(), ResponseEnum.UNKNOWN_ERROR.getStatus(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return courierCost;
+        return BaseResponse.<BigDecimal>builder()
+                .status(ResponseEnum.SUCCESS.getStatus())
+                .message(ResponseEnum.SUCCESS.getMessage())
+                .data(courierCost)
+                .build();
     }
 }
